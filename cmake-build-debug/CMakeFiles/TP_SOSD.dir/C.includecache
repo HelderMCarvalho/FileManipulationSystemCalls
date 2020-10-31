@@ -9,4 +9,14 @@
 /home/jc/CLionProjects/TP_SOSD/main.c
 stdio.h
 -
+string.h
+-
+ctype.h
+-
+stdlib.h
+-
+main.h
+/home/jc/CLionProjects/TP_SOSD/main.h
+
+/home/jc/CLionProjects/TP_SOSD/main.h
 

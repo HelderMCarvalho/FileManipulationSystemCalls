@@ -3,5 +3,4 @@ project(TP_SOSD C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(TP_SOSD
-        main.c)
+add_executable(TP_SOSD main.c)
