@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/TP_SOSD.dir/main.c.o  -o TP_SOSD 
