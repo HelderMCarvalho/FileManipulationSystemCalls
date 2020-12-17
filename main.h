@@ -29,7 +29,7 @@ operation getCurrentOperation(char *arg[]);
 /**
  * Executa o programa
  */
-void run();
+int run(int op, char **argv);
 
 /**
  * Recebendo o Nº de argumentos decide se o programa irá correr.
@@ -37,6 +37,8 @@ void run();
  */
 void canYouRunIt(int argc);
 
+
+int mostra(char **argv, bool devolveChar);
 
 char **copyArgcv(int argc, char *argv[]);
 

@@ -2,7 +2,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <stdbool.h>
+#include <fcntl.h>
 #include "main.h"
+
+void apagar(char **argv);
 
 char *goingUp(char *string) {
     unsigned char *aux = (unsigned char *) string;
@@ -23,7 +29,7 @@ void canYouRunIt(int argCounter) {
     // 1: sem argumentos (só o comando em si)
     // >1 : tem argumentos
     if (argCounter == 1) {
-        printf("Insira argumentos pfv.");
+        fprintf(stdout, "Insira argumentos pfv.");
         exit(1);
     }
 }
@@ -32,48 +38,140 @@ operation setCurrentOp(char *arg) {
 
     // Format arg to avoid strmp problems
     arg = goingUp(arg);
-    printf("\n");
+    fprintf(stdout, "\n");
     int i = 0;
     for (i = 0; i < strlen(arg); ++i) {
-        printf("%c ", arg[i]);
+//        fprintf(stdout, "%c ", arg[i]);
     }
-    printf("%d", i);
+//    fprintf(stdout, "%d", i);
 
 
-    printf("\nRecebi: %s\n", arg);
+//    fprintf(stdout, "\nRecebi: %s\n", arg);
     if (strcmp(arg, "MOSTRA") == 0) {
-        printf("Operação: Mostra");
+        fprintf(stdout, "Operação: Mostra\n");
         return Mostra;
     }
     if (strcmp(arg, "CONTA") == 0) {
-        printf("Operação: Conta");
+        fprintf(stdout, "Operação: Conta\n");
         return Conta;
     }
     if (strcmp(arg, "APAGA") == 0) {
-        printf("Operação: Apaga");
+        fprintf(stdout, "Operação: Apaga\n");
         return Apaga;
     }
     if (strcmp(arg, "INFORMA") == 0) {
-        printf("Operação: Informa");
+        fprintf(stdout, "Operação: Informa\n");
         return Informa;
     }
     if (strcmp(arg, "ACRESCENTA") == 0) {
-        printf("Operação: Acrescenta");
+        fprintf(stdout, "Operação: Acrescenta\n");
         return Acrescenta;
     }
     if (strcmp(arg, "LISTA") == 0) {
-        printf("Operação: Lista");
+        fprintf(stdout, "Operação: Lista\n");
         return Lista;
     }
     if (strcmp(arg, "TERMINA") == 0) {
-        printf("Operação: Termina");
+        fprintf(stdout, "Operação: Termina\n");
         return Termina;
     }
     return Erro;
 }
 
-void run() {
-    printf("\nExecutei o codigo bla bla bla\n");
+int run(int op, char **argv) {
+//    fprintf(stdout, "\nExecutei o codigo bla bla bla\n");
+
+    int retstatus;
+    int pid = fork();
+
+    if (pid == -1) {
+        perror("erro no fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (pid == 0) // filho
+    {
+        // Child
+//        printf("Child has x = %d\n", getpid());
+        switch (op) {
+            case 0:
+                fprintf(stderr, "Kaboom! (ERRO)");
+                exit(1);
+                break; //ERRO
+            case 1:
+                return mostra(argv, false);
+                break;//Mostra
+            case 2:
+                printf("Numero de chars: %d", mostra(argv, true));
+                return true;
+                break;//Conta
+            case 3:
+                apagar(argv);
+
+                break;//Apaga
+            case 4:
+                break;//Informa
+            case 5:
+                break;//Acrescenta
+            case 6:
+                break;//Lista
+            case 7:
+                fprintf(stdout, "Escolheu sair.");
+                exit(0);
+                break; //EXIT
+            default:
+                fprintf(stderr, "Kaboom! (ERRO)");
+                exit(1);
+                break;
+        }
+        perror("erro no exec");
+        exit(EXIT_FAILURE);
+    }
+
+    wait(&retstatus);
+    return WEXITSTATUS(retstatus);
+}
+
+void apagar(char **argv) {
+    printf("Correu bem? (0): %d",unlink(argv[2]));
+}
+
+int mostra(char **argv, bool devolveChar) {
+
+    if (!argv[2]) {
+        printf("Não existe argumento para o caminho do ficheiro.");
+        return false;
+    }
+    char *filePath = argv[2];
+    int fd, leitura, numC = 0;
+    char buffer[1025];
+
+    fd = open(filePath, O_RDONLY);
+    if (fd < 0) {
+        perror("erro na abertura do ficheiro");
+        return false;
+    }
+
+    // ficheiro disponivel no descritor fd
+    leitura = read(fd, buffer, 1024);
+
+    while (leitura > 0) {
+        buffer[leitura] = '\0';
+        if (devolveChar) {
+            numC += leitura;
+        } else {
+            puts(buffer);
+        }
+        leitura = read(fd, buffer, 1024);
+    }
+
+    // -1 houve erro
+    if (leitura == -1) {
+        perror("Erro na leitura do ficheiro: ");
+        return false;
+    }
+    close(fd);
+    return numC;
 }
 
 char **copyArgcv(int argc, char *argv[]) {
@@ -97,38 +195,36 @@ int main(int argc, char *argv[]) {
     // We have arguments!
     // -------------------
     operation currentOp;
-    do {
-        printf("\nCount: %d", argCounter);
-        for (int i = 0; i < argCounter; ++i) {
-            printf("\nargv[%d]: %s", i, argVector[i]);
-        }
+
+    // "Endless LOOP"
+    while (1) {
+//        fprintf(stdout, "\nCount: %d", argCounter);
+//        for (int i = 0; i < argCounter; ++i) {
+//            fprintf(stdout, "\nargv[%d]: %s", i, argVector[i]);
+//        }
 
         currentOp = getCurrentOperation(argVector);
         // > 0 : tudo OK!
         // = 0 : ERROR!
         // = 7 : Sair!
 
-        if (currentOp > 0) {
-            // Executa o comando
-            run();
-        } else if (currentOp == 7) {
-            printf("Escolheu sair.");
-            exit(0);
-        } else {
-            printf("Kaboom! (ERRO)");
-        }
+//        fprintf(stdout, "NUM OP: %d", currentOp);
+
+
+        // Executa o comando
+        run(currentOp, argVector);
 
         // Lê o proximo comando
         char *comando = NULL;
         size_t len = 0;
 
-        printf("\n%%");
+        fprintf(stdout, "\n%%");
         getline(&comando, &len, stdin);
 
         // Retira o \n do final
-        comando[strlen(comando)-1] = '\0';
-        printf("Comando:");
-        puts(comando);
+        comando[strlen(comando) - 1] = '\0';
+//        fprintf(stdout, "Comando:");
+//        puts(comando);
 
         char *token = strtok(comando, " ");
 
@@ -140,9 +236,6 @@ int main(int argc, char *argv[]) {
         }
         argCounter = i;
         argVector[i] = NULL; //argVector ends with NULL
-        printf("\nnum args: %d", i);
-
-    } while (currentOp != Termina);
-
-    return -1;
+//        fprintf(stdout, "\nnum args: %d", i);
+    }
 }
