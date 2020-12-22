@@ -37,8 +37,16 @@ int run(int op, char **argv);
  */
 void canYouRunIt(int argc);
 
+//void printError(operation currentOp, int errorNum);
 
 int mostra(char **argv, bool devolveChar);
+
+bool apagar(char *filepath);
+bool lista(char *filepath);
+void informa(char *filePath);
+void acrescenta(char *origem, char *destino);
+
+
 
 char **copyArgcv(int argc, char *argv[]);
 
