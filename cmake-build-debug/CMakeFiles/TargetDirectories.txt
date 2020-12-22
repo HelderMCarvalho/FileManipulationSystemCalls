@@ -1,3 +1,0 @@
-/home/jc/CLionProjects/TP_SOSD/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/jc/CLionProjects/TP_SOSD/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/jc/CLionProjects/TP_SOSD/cmake-build-debug/CMakeFiles/TP_SOSD.dir

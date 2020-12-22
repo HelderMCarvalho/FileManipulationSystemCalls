@@ -13,10 +13,6 @@
 #include <pwd.h>
 #include "main.h"
 
-
-//#define ANSI_COLOR_RED     "\x1b[31m"
-//#define ANSI_COLOR_RESET   "\x1b[0m"
-
 char *goingUp(char *string) {
     unsigned char *aux = (unsigned char *) string;
 
@@ -65,46 +61,15 @@ char *getOp(operation op) {
 }
 
 operation setCurrentOp(char *arg) {
-
     // Format arg to avoid strmp problems
     arg = goingUp(arg);
-//    fprintf(stdout, "\n");
-//    int i;
-//    for (i = 0; i < strlen(arg); ++i) {
-//        fprintf(stdout, "%c ", arg[i]);
-//    }
-//    fprintf(stdout, "%d", i);
-
-
-//    fprintf(stdout, "\nRecebi: %s\n", arg);
-    if (strcmp(arg, "MOSTRA") == 0) {
-        fprintf(stdout, "Operação: Mostra\n");
-        return Mostra;
-    }
-    if (strcmp(arg, "CONTA") == 0) {
-        fprintf(stdout, "Operação: Conta\n");
-        return Conta;
-    }
-    if (strcmp(arg, "APAGA") == 0) {
-        fprintf(stdout, "Operação: Apaga\n");
-        return Apaga;
-    }
-    if (strcmp(arg, "INFORMA") == 0) {
-        fprintf(stdout, "Operação: Informa\n");
-        return Informa;
-    }
-    if (strcmp(arg, "ACRESCENTA") == 0) {
-        fprintf(stdout, "Operação: Acrescenta\n");
-        return Acrescenta;
-    }
-    if (strcmp(arg, "LISTA") == 0) {
-        fprintf(stdout, "Operação: Lista\n");
-        return Lista;
-    }
-    if (strcmp(arg, "TERMINA") == 0) {
-        fprintf(stdout, "Operação: Termina\n");
-        return Termina;
-    }
+    if (strcmp(arg, "MOSTRA") == 0) return Mostra;
+    if (strcmp(arg, "CONTA") == 0) return Conta;
+    if (strcmp(arg, "APAGA") == 0) return Apaga;
+    if (strcmp(arg, "INFORMA") == 0) return Informa;
+    if (strcmp(arg, "ACRESCENTA") == 0) return Acrescenta;
+    if (strcmp(arg, "LISTA") == 0) return Lista;
+    if (strcmp(arg, "TERMINA") == 0) return Termina;
     return Erro;
 }
 
@@ -154,26 +119,25 @@ void informa(char *filePath) {
             printf("Desconhecido\n");
             break;
     }
-
     printf("I-node:        %ld\n", (long) properties.st_ino);
     printf("Dono:          %s\n", getpwuid(properties.st_uid)->pw_name);
 }
 
 void acrescenta(char *origem, char *destino) {
-    int fd1, fd2;
+    int fOrigem, fDestino;
     char c;
-    fd1 = open(origem, O_RDONLY);
-    fd2 = open(destino, O_APPEND | O_WRONLY);
-    if (fd1 < 0 || fd2 < 0) {
+    fOrigem = open(origem, O_RDONLY);
+    fDestino = open(destino, O_APPEND | O_WRONLY);
+    if (fOrigem < 0 || fDestino < 0) {
         perror("Acrescenta");
         exit(EXIT_FAILURE);
     }
 
-    while (read(fd1, &c, sizeof(c))) {
-        write(fd2, &c, sizeof(c));
+    while (read(fOrigem, &c, sizeof(c))) {
+        write(fDestino, &c, sizeof(c));
     }
-    close(fd1);
-    close(fd2);
+    close(fOrigem);
+    close(fDestino);
 }
 
 int run(int op, char **argv) {
@@ -191,15 +155,15 @@ int run(int op, char **argv) {
             // Codigo do processo filho
             switch (op) {
                 case 0:
-                    fprintf(stderr, "Kaboom! (ERRO)");
-                    exit(30);
+                    fprintf(stderr, "Comando inexistente!\n");
+                    exit(1);
                 case 1:
                     //Mostra
                     mostra(argv, false);
                     break;
                 case 2:
                     //Conta
-                    printf("Numero de chars: %d", mostra(argv, true));
+                    printf("Numero de chars: %d\n", mostra(argv, true));
                     break;
                 case 3:
                     //Apaga
@@ -215,7 +179,6 @@ int run(int op, char **argv) {
                     lista(argv[2]);
                     break;//Lista
                 case 7:
-                    fprintf(stdout, "Escolheu sair.");
                     exit(30);
                 default:
                     exit(30);
@@ -235,7 +198,7 @@ bool apagar(char *filepath) {
     if (!unlink(filepath)) {
         printf("\n\t-> %s\n", filepath);
     } else {
-        perror("File doesnt exist");
+        perror("Apaga");
         exit(errno);
     }
 }
@@ -319,14 +282,6 @@ int mostra(char **argv, bool devolveChar) {
     return numC;
 }
 
-//void printError(operation currentOp, int errorNum) {
-//    fprintf(stdout, ANSI_COLOR_RED"%s: %s\n"ANSI_COLOR_RESET,getOp(currentOp),strerror( errorNum ));
-//
-//    printf("Pressione uma tecla para continuar.\n\n");
-//    int c = getchar();
-//    system("clear");
-//}
-
 int main(int argc, char *argv[]) {
 
     // 1º Passo
@@ -348,29 +303,10 @@ int main(int argc, char *argv[]) {
     // 2º Passo
     // "Endless LOOP"
     while (1) {
-
-
-////         Print all arguments
-//        fprintf(stdout, "\nCount: %d", argCounter);
-//        for (int i = 0; i < argCounter; ++i) {
-//            fprintf(stdout, "\nargv[%d]: %s", i, argVector[i]);
-//        }
-
         currentOp = getCurrentOperation(argVector);
-
-        // > 0 : tudo OK!
-        // = 0 : ERROR!
-        // = 7 : Sair!
-
-//        fprintf(stdout, "NUM OP: %d", currentOp);
-
 
         // Executa o comando
         printf("Terminou o comando %s com o código: %d", getOp(currentOp), run(currentOp, argVector));
-
-//        if(errno){
-//            printError(currentOp,errno);
-//        }
 
         // Lê o proximo comando
         char *comando = NULL;
