@@ -82,6 +82,8 @@ char **copyArgcv(int argc, char *argv[]) {
     return aux;
 }
 
+/// Informa o tipo de ficheiro, i-node e dono do caminho fornecido.
+/// \param filePath
 void informa(char *filePath) {
 
     struct stat properties;
@@ -123,6 +125,9 @@ void informa(char *filePath) {
     printf("Dono:          %s\n", getpwuid(properties.st_uid)->pw_name);
 }
 
+/// Copia o conteudo do ficheiro origem, e acrescenta no final do ficheiro de destino.
+/// \param origem
+/// \param destino
 void acrescenta(char *origem, char *destino) {
     int fOrigem, fDestino;
     char c;
@@ -140,11 +145,18 @@ void acrescenta(char *origem, char *destino) {
     close(fDestino);
 }
 
+/// Recebe a operação e os respectivos argumentos a serem executados.
+/// \param op
+/// \param argv
+/// \return
 int run(int op, char **argv) {
 
     bool termina = false;
     int child_pid = -1, child_status = -1;
 
+    /**
+     * Guarda o ProcessID do filho criado.
+     */
     child_pid = fork();
     switch (child_pid) {
         case -1:
@@ -153,22 +165,20 @@ int run(int op, char **argv) {
             exit(EXIT_FAILURE);
         case 0:
             // Codigo do processo filho
+            // Verificar a operação a executar e executa a respectiva função.
             switch (op) {
                 case 0:
                     fprintf(stderr, "Comando inexistente!\n");
-                    exit(1);
+                    exit(1); // Erro no comando
                 case 1:
-                    //Mostra
                     mostra(argv, false);
-                    break;
+                    break; //Mostra
                 case 2:
-                    //Conta
                     printf("Numero de chars: %d\n", mostra(argv, true));
-                    break;
+                    break; // Conta
                 case 3:
-                    //Apaga
                     apagar(argv[2]);
-                    break;
+                    break; //Apaga
                 case 4:
                     informa(argv[2]);
                     break;//Informa
@@ -179,13 +189,15 @@ int run(int op, char **argv) {
                     lista(argv[2]);
                     break;//Lista
                 case 7:
-                    exit(30);
+                    exit(30); // Termina
                 default:
-                    exit(30);
+                    exit(30); // Por defeito.
             }
+            // Se chegar a este ponto, o comando foi executado com sucesso, e o processo filho termina.
+            // Em caso de erro, o processo filho já teria terminado.
             exit(EXIT_SUCCESS);
         default:
-            // Codigo do processo pai
+            // Processo pai espera que o processo filho termine.
             wait(&child_status);
             // Numero escolhido para terminar o programa
             if (WEXITSTATUS(child_status) == 30)
@@ -194,6 +206,9 @@ int run(int op, char **argv) {
     }
 }
 
+/// Recebe um caminho de um ficheiro e apaga-o
+/// \param filepath
+/// \return
 bool apagar(char *filepath) {
     if (!unlink(filepath)) {
         printf("\n\t-> %s\n", filepath);
@@ -212,6 +227,9 @@ char *getCurrentDirectory() {
     return res;
 }
 
+/// Recebe um caminho e lista o seu conteudo. No caso de o caminho não ser fornecido, usa a pasta atual.
+/// \param filepath
+/// \return
 bool lista(char *filepath) {
     if (!filepath) {
         filepath = getCurrentDirectory();
@@ -247,6 +265,7 @@ bool lista(char *filepath) {
     }
 }
 
+/// Mostra o conteudo de um ficheiro, ou conta os seus caracteres.
 int mostra(char **argv, bool devolveChar) {
 
 
@@ -303,20 +322,50 @@ int main(int argc, char *argv[]) {
     // 2º Passo
     // "Endless LOOP"
     while (1) {
+
+        /**
+         * Esta parte do código é responsável por correr o programa em LOOP. Lê os comandos inseridos pelo utilizador,
+         * executa-os e apresenta os resultados na consola. De seguida, lê o proximo comando.
+         *
+         */
+
+
+        /**
+         * A função getCurrentOperation, ao receber o comando, usa uma função toupper que é responsável por colocar os caracteres
+         * em formato Maisculo. De seguida, usa o strcmp para comparar o comando inserido com os comandos prédefinidos.
+         * A variavel currentOp irá tomar o valor do comando a executar, caso exista. Se for um comando invalido fica com
+         * o valor de ERRO.
+         */
         currentOp = getCurrentOperation(argVector);
 
-        // Executa o comando
+
+        /**
+         * Executa a operação na função Run e returna 1 (Erro na execução) ou 0 (Sucesso).
+         * Caso o comando seja invalido o programa fecha-se.
+         * A GetOp devolve a operação em formato textual.
+         */
         printf("Terminou o comando %s com o código: %d", getOp(currentOp), run(currentOp, argVector));
 
-        // Lê o proximo comando
+
+        /**
+         * Declarar a variavel que irá receber o comando novo.
+         */
         char *comando = NULL;
         size_t len = 0;
 
+        /**
+         * Imprime na consola, o caracter % que indica que o utilizador pode inserir um novo comando e lê o mesmo.
+         */
         printf("\n\n%%");
         getline(&comando, &len, stdin);
 
-        // Retira o \n do final
+        // Retira o \n do final do array.
         comando[strlen(comando) - 1] = '\0';
+
+
+        /**
+         * Retira o primeiro conjunto de caracter até ao espaçp
+         */
 
         char *token = strtok(comando, " ");
 
@@ -324,9 +373,20 @@ int main(int argc, char *argv[]) {
         while (token != NULL && i < MAXCOMANDO) {
             argVector[i] = token;
             i++;
+
+            /**
+             * Informo a função strtok para continuar a dividir a string até chegar ao ultimo argumento
+             */
             token = strtok(NULL, " ");
         }
+        /**
+         * Numero de argumentos
+         */
         argCounter = i;
+
+        /**
+         * Ultimo index fica a null
+         */
         argVector[i] = NULL;
     }
 }
